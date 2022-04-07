@@ -11,7 +11,7 @@ window.onload = function() {
   const addressInput = document.getElementById('address');
   const amountInput = document.getElementById('amount');
   
-  const contractAddr = '0xb083f2fc816f94ce4aeb29857c919a997b083b81';
+  const contractAddr = '0xb032815341c6f3c50b49433f03167fed129c7313';
   const contractAbi = [
     // transfer
     {
@@ -37,8 +37,8 @@ window.onload = function() {
     }
   ];
   const contractOwner = {
-	  addr: '0xC482801e49bc0CDD7FE8E35A000ca12cC313D71A',
-	  key: '5658e8456784817f3bf0a662f1cb5cfb560671c373269452c046a4bc18192c36'
+	  addr: '0x19C021A753D29feA7659bba75544d13D2ADFD620',
+	  key: '05dfa85852b22f3c0d41b9e25e2bb16992199995c3a0bdac8c046b4aa85e167e'
   };
 
   const connect = async function () {
@@ -63,7 +63,7 @@ window.onload = function() {
 
   const transaction = function(event) {
     event.preventDefault();
-    const amount = amountInput.value;
+    const amount = amountInput.value * 100;
     const address = addressInput.value;
 
     console.log(amount);
@@ -90,12 +90,17 @@ window.onload = function() {
 
   }
 
-  async function sendToken(receiver, amount) {
-    console.log(`Start to send ${amount} tokens to ${receiver}`);
-    const contract = new web3.eth.Contract(contractAbi, contractAddr);
+  function sendToken(receiver, amount) {
+    // console.log(`Start to send ${amount} tokens to ${receiver}`);
+     const contract = new web3.eth.Contract(contractAbi, contractAddr);
+    // console.log(contract);
+    // const data = contract.methods.transfer(receiver, web3.utils.toWei( amount.toString() ) ).encodeABI();
+    // console.log(data);
     console.log(contract);
-    const data = contract.methods.transfer(receiver, web3.utils.toWei( amount.toString() ) ).encodeABI();
-    console.log(data);
+    contract.methods.transfer(receiver, amount).send({from: contractOwner.addr})
+    .on('transactionHash', function(hash){
+      console.log(hash);
+});
     //let data = contract.methods.transfer(receiver, amount).encodeABI();
     
     // var rawTransaction = {
@@ -117,18 +122,18 @@ window.onload = function() {
   //     to: address,
   //     data: contract.methods.balanceOf(address).encodeABI()
     // }).then(balance => {console.log(balance)})
-    var tx = {
-        from: account,
-        to: receiver,
-        data: data,
-        gas: 21000,  
-    }
-    await web3.eth.sendTransaction(tx).then(res => {
-        console.log("res",res)
-    }).catch(err => {
-        console.log("err",err)
-    });
-  }
+  //   var tx = {
+  //       from: account,
+  //       to: receiver,
+  //       data: data,
+  //       gas: 21000,  
+  //   }
+  //   await web3.eth.sendTransaction(tx).then(res => {
+  //       console.log("res",res)
+  //   }).catch(err => {
+  //       console.log("err",err)
+  //   });
+   }
 
 
   connectButton.onclick = connect;
