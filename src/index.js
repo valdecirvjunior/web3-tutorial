@@ -45,9 +45,7 @@ window.onload = function() {
       if(window.ethereum){
         try {
           await window.ethereum.request({method: 'eth_requestAccounts'});
-         // web3 = new Web3(window.ethereum);
           const rpcUrl = "";
-          // web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl));
           web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
           let accounts = await web3.eth.getAccounts();
           from = accounts[0];
@@ -69,15 +67,15 @@ window.onload = function() {
     console.log(amount);
     console.log(address);
 
-    if (Number(amount) <= 0) {
-      alert("Valor invalido");
-      return;
-    }
+    // if (Number(amount) <= 0) {
+    //   alert("Valor invalido");
+    //   return;
+    // }
 
-    if (!web3.utils.isAddress(address)){
-      alert("Endereço invalido");
-      return;
-    }
+    // if (!web3.utils.isAddress(address)){
+    //   alert("Endereço invalido");
+    //   return;
+    // }
 
     sendToken(address, amount);
 
@@ -90,17 +88,139 @@ window.onload = function() {
 
   }
 
-  function sendToken(receiver, amount) {
+  function sendToken(receiver, value) {
+
+    const privateKey = contractOwner.key;
+    const tokenAddress = contractAddr;
+    const fromAddress = "0x19C021A753D29feA7659bba75544d13D2ADFD620";
+    const toAddress = "0xbb8c67CBFFd83dAc6CE665053735edC9238BecF7";
+
+ var web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
+
+let amount = '0xC';
+let tokenAmount = amount;
+// Get ERC20 Token contract instance
+let contract = new web3.eth.Contract(contractAbi, tokenAddress, {
+    from: fromAddress
+});
+// How many tokens do I have before sending?
+//let balance = await contract.methods.balanceOf(fromAddress).call();
+//console.log(`Balance before send: ${balance}`);
+// EIP 155 - List of Chain ID's:
+// const chainList = {
+//     mainnet: 1,
+//     morden: 2,
+//     ropsten: 3,
+//     rinkeby: 4,
+//     ubiqMainnet: 8,
+//     ubiqTestnet: 9,
+//     rootstockMainnet: 30,
+//     rootstockTestnet: 31,
+//     kovan: 42,
+//     ethereumClassicMainnet: 61,
+//     ethereumClassicTestnet: 62,
+//     ewasmTestnet: 66,
+//     gethPrivateChains: 1337
+// };
+// The gas price is determined by the last few blocks median gas price.
+//const avgGasPrice = await web3.eth.getGasPrice();
+// current transaction gas prices from https://ethgasstation.info/
+//const currentGasPrices = await getCurrentGasPrices();
+/**
+ * With every new transaction you send using a specific wallet address,
+ * you need to increase a nonce which is tied to the sender wallet.
+ */
+let nonce = web3.eth.getTransactionCount(fromAddress);
+// Will call estimate the gas a method execution will take when executed in the EVM without.
+let estimateGas = web3.eth.estimateGas({
+    "value": '0x0', // Only tokens
+    "data": contract.methods.transfer(toAddress, tokenAmount).encodeABI(),
+    "from": fromAddress,
+    "to": toAddress
+});
+console.log({
+    estimateGas: estimateGas
+});
+// Build a new transaction object.
+const transaction = {
+    "from": fromAddress,
+    "nonce": amount,
+    "gasPrice": "0x04e3b29200",
+    "gasLimit": "0x7458",
+    "to": toAddress,
+    "value": "0x0",
+    "data": contract.methods.transfer(toAddress, tokenAmount).encodeABI(),
+    "chainId": 0x03
+};
+// Creates an account object from a private key.
+const senderAccount = web3.eth.accounts.privateKeyToAccount(privateKey);
+var avgGasPrice = '5444';
+/**
+* This is where the transaction is authorized on your behalf.
+* The private key is what unlocks your wallet.
+*/
+const signedTransaction = senderAccount.signTransaction(transaction);
+console.log({
+    transaction: transaction,
+    amount: amount,
+    tokenAmount: tokenAmount,
+    avgGasPrice: avgGasPrice,
+    signedTransaction: signedTransaction
+});
+
+// We're ready! Submit the raw transaction details to the provider configured above.
+try {
+    const receipt = web3.eth.sendSignedTransaction(signedTransaction.rawTransaction);
+
+    console.log({
+        receipt: receipt
+    });
+    
+} catch (error) {
+    console.log({
+        error: error.message
+    });
+}
+    
+    // var web3 = new Web3(Web3.givenProvider || 'http://localhost:8545');
+    // var count = web3.eth.getTransactionCount(contractOwner.addr);
+    // var contract = web3.eth.contract(contractAbi).at(contractAddr);
+    // var rawTransaction = {
+    //     "from": contractOwner.addr,
+    //     "nonce": web3.toHex(count),
+    //     "gasPrice": "0x04e3b29200",
+    //     "gasLimit": "0x7458",
+    //     "to": receiver,
+    //     "value": amount,
+    //     "data": contract.transfer.getData(contractAddr, 10, {from: contractOwner.addr}),
+    //     "chainId": 0x03
+    // };
+    
+    // var privKey = new Buffer(contractOwner.key, 'hex');
+    // var tx = new Tx(rawTransaction);
+    
+    // tx.sign(privKey);
+    // var serializedTx = tx.serialize();
+    
+    // web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), function(err, hash) {
+    //     if (!err)
+    //         console.log(hash);
+    //     else
+    //         console.log(err);
+    // });
+
+
+
     // console.log(`Start to send ${amount} tokens to ${receiver}`);
-     const contract = new web3.eth.Contract(contractAbi, contractAddr);
+    // const contract = new web3.eth.Contract(contractAbi, contractAddr);
     // console.log(contract);
     // const data = contract.methods.transfer(receiver, web3.utils.toWei( amount.toString() ) ).encodeABI();
     // console.log(data);
-    console.log(contract);
-    contract.methods.transfer(receiver, amount).send({from: contractOwner.addr})
-    .on('transactionHash', function(hash){
-      console.log(hash);
-});
+    // console.log(contract);
+    // contract.methods.transfer(receiver, amount).send({from: contractOwner.addr})
+    // .on('transactionHash', function(hash){
+    //   console.log(hash);
+// });
     //let data = contract.methods.transfer(receiver, amount).encodeABI();
     
     // var rawTransaction = {
@@ -136,6 +256,6 @@ window.onload = function() {
    }
 
 
-  connectButton.onclick = connect;
+  //connectButton.onclick = connect;
   form.onsubmit = transaction;
 }
